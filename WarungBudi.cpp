@@ -216,23 +216,15 @@ void AddDish(){
         }
     }while(addFlag==0);
     do{
-        addFlag = 1;
         printf(" Insert the price of the dish [1000...50000]: ");
         scanf("%d", &price);
         getchar();
-        if(price<1000 || price>50000){
-            addFlag = 0;
-        }
-    }while(addFlag==0);
+    }while(price<1000 || price>50000);
     do{
-        addFlag = 1;
         printf(" Insert the quantity of the dish [1...999]: ");
         scanf("%d", &quantity);
         getchar();
-        if(quantity<1 || quantity>999){
-            addFlag = 0;
-        }
-    }while(addFlag = 0);
+    }while(quantity<=0 || quantity>=1000);
     pushDish(dishName, price, quantity);
     printf(" The dish has been added!\n");
     printf(" Please enter to continue..");
@@ -252,7 +244,16 @@ void RemoveDish(){
     int index = 1;
     while(curr!=NULL){
     	int len = strlen(curr->name), lenP = strlen(curr->priceStr);
-        printf("  %2d. %*s     %03d     %*s\n", index, ((20-len)>>1)+len, curr->name, curr->quantity, ((8-lenP)>>1)+lenP, curr->priceStr);
+		int length = 20-len;
+		if(length%2!=0){
+			length/=2;
+			length+=1;
+		}
+		else{
+			length/=2;
+		}
+		char str[100] = "";
+        printf("  %2d. %*s%*s%03d      %*s\n", index, ((20-len)/2)+len, curr->name, length, str, curr->quantity, ((8-lenP)>>1)+lenP, curr->priceStr);
         curr = curr->next;
         index++;
     }
@@ -470,6 +471,21 @@ void Payment(){
 	getchar();
 }
 
+void ExitPage(){
+	printf("Please expand the terminal to full screen!\n");
+	printf("Press enter to continue..");
+	getchar();
+	char screen[255][255];
+	FILE *fp = fopen("splash-screen.txt", "r");
+	int index = 0;
+	while(fscanf(fp, "%[^\n]\n",screen[index])!=EOF){
+		index++;
+	}
+	fclose(fp);
+	for(int i=0;i<index;i++){
+		printf("%s\n", screen[i]);
+	}
+}
 int main(){
     char choose;
     do{
@@ -514,6 +530,7 @@ int main(){
                 Payment();
                 break;
             case 8:
+				ExitPage();
                 break;
         }
     }while(choose-'0'!=8);
