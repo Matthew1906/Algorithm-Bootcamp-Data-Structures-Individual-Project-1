@@ -28,6 +28,7 @@ const char* detectOS() {
   #endif
 }
 
+// FUNGSI-FUNGSI UNTUK DISH / MENU MAKANAN
 struct dish {
 	char name[100];
 	int price;
@@ -128,15 +129,17 @@ int popDish(char *name){
 		return 1;
 	}
 }
-
+// FUNGSI - FUNGSI UNTUK CUSTOMER
 struct customer{
 	char name[100];
 	struct dish *bookedHead;
     struct dish *bookedTail;
+	// STRUCT DISH UNTUK MENU MAKANAN YANG DIPESAN
 	struct customer *next;
-}*table[26]={NULL};
+	// TEKNISNYA = LINKED LIST
+}*table[26]={NULL}; // HASHTABLE
 
-unsigned long DJB2(char *str) {
+unsigned long DJB2(char *str) { // HASHING METHOD
   unsigned long hash = 5381;
   int c;
   while ((c = *str++))
@@ -145,6 +148,7 @@ unsigned long DJB2(char *str) {
 }
 
 void pushBook(struct customer *cust, char *name, int qty, int price){
+	//MEMASUKKAN MAKANAN YANG DIPESAN KE STRUCT CUSTOMER SPECIFIC
 	struct dish * node = createDish(name, price, qty);
 	if(cust->bookedHead==NULL){
 		cust->bookedHead = cust->bookedTail = node;
@@ -171,6 +175,7 @@ void pushBook(struct customer *cust, char *name, int qty, int price){
 	}
 }
 void insert(char *str){
+	//MENAMBAHKAN NAMA KE HASHTABLE CUSTOMER
 	struct customer *node = (struct customer*)malloc(sizeof(struct customer));
 	strcpy(node->name, str);
 	node->next = NULL;
@@ -186,8 +191,11 @@ void insert(char *str){
 			curr = curr->next;
 		}
 		curr->next = node;
+		//SEPARATE CHAINING METHOD, HASHTABLE = ARRAY OF SINGLE LINKED LISTS
 	}
 }
+
+// FUNGSI-FUNGSI UTAMA SETIAP MENU
 
 void AddDish(){
 	clearScreen();
@@ -255,6 +263,7 @@ void RemoveDish(){
 		char str[100] = "";
         printf("  %2d. %*s%*s%03d      %*s\n", index, ((20-len)/2)+len, curr->name, length, str, curr->quantity, ((8-lenP)>>1)+lenP, curr->priceStr);
         curr = curr->next;
+		//display menggunakan padding
         index++;
     }
     printf(" ========================================= \n");
@@ -291,13 +300,14 @@ void AddCustomer(){
 		}
 	}while(add_flag == 0);
 	insert(customerName);
+	// menambah customer, tidak unique
 	printf(" Customer has been added!\n");
 	printf(" Press enter to continue..");
 	getchar();
 	return;
 }
 
-int search(char *cust){
+int search(char *cust){//fungsi mencari customer sesuai nama, return -1 jika tidak ditemukan
 	unsigned long i = DJB2(cust);
 	if(table[i]!=NULL){
 		struct customer * curr = table[i];
@@ -318,6 +328,7 @@ void SearchCustomer(){
 	printf(" Insert the customer's name to be searched: ");
 	scanf("%[^\n]", find);
 	getchar();
+	// mencari customer
 	int found = search(find);
 	if(found==-1){
 		printf(" %s is not present\n", find);
@@ -330,7 +341,7 @@ void SearchCustomer(){
 	return;
 }
 
-int crowded(){
+int crowded(){ //memeriksa apakah hashtable customer ada orgnya, kalau ngga bisa kacau
 	for(int i=0;i<26;i++){
 		if(table[i]!=NULL){
 			return 1;
@@ -355,6 +366,7 @@ void ViewWarteg(){
 				if(temp1!=NULL){
 					printf("-> ");
 				}
+				// customer yang indexnya sama, akan dipisahkan dengan ->
 			}
 			printf("\n");
 		}
@@ -367,6 +379,7 @@ void ViewWarteg(){
 void Order(){
 	clearScreen();
 	int cek =crowded();
+	// memastikan ada customer
 	if(cek == -1){
 		printf(" There is no customer!\n");
 		printf(" Press enter to continue..");
@@ -382,13 +395,16 @@ void Order(){
 		find = search(name);
 	}while(find==-1);
 	unsigned long search = DJB2(name);
+	//mencari index nama
 	if(table[search]!=NULL){
 		struct customer * curr = table[search];
 		while(curr!=NULL && strcmp(curr->name,name)!=0){
 			curr = curr->next;
 		}
+		// mencari nama
 		if(curr!=NULL){
 			if(head==NULL){
+				//memastikan ada makanan di menu
 				printf(" There are no food available!\n");
 				printf(" Press enter to continue..");
 				getchar();
@@ -397,17 +413,27 @@ void Order(){
 			int pesanan;
 			printf(" Insert the amount of dish: ");
 			scanf("%d", &pesanan);
+			// pilih jumlah makanan yang dipesan
 			getchar();
 			for(int i=1;i<=pesanan;i++){
+				if(head==NULL){
+					//memastikan ada makanan di menu
+					printf(" There are no food available!\n");
+					printf(" Press enter to continue..");
+					getchar();
+					return;
+				}
 				int quantity, flag = 1;
 				char menu[100];
 				do{
 					flag = 1;
 					printf(" [%d] Insert the dish's name and quantity: ", i);
 					scanf("%[^x]x%d", menu, &quantity);
+					//regex
 					getchar();
 					int lenCurr = strlen(menu);
 					menu[lenCurr-1] = '\0';
+					//disasumsikan inputnya pasti dishName xdishQuantity
 					//printf("%s\n", menu);
 					struct dish *temp = head;
 					while(temp!=NULL){
@@ -418,15 +444,19 @@ void Order(){
 					}
 					if(temp==NULL){
 						flag = 0;
+						// memastikan bahwa menu yang dipilih ada di menu yang tersedia
 					}
 					else if(quantity>temp->quantity){
 						flag = 0;
+						// memastikan jumlah dish yang dipesan <= jumlah dish yang ada
 					}
 					else{
 						pushBook(curr, menu, quantity, quantity*(temp->price));
+						//memasukkan dish, qty, dan total harga menu tersebut ke struct menu milik customer
 						temp->quantity -= quantity;
 						if(temp->quantity == 0){
 							int buang = popDish(temp->name);
+							//popDish = membuang dish yang qty nya <=0
 						}
 					}
 				}while(flag ==0);
@@ -444,6 +474,7 @@ void Order(){
 void Payment(){
 	clearScreen();
 	int cek =crowded();
+	//memeriksa apakah terdapat customer (jika tidak ada, return, kalau ngga nnti infinite loop)
 	if(cek == -1){
 		return;
 	}
@@ -454,12 +485,14 @@ void Payment(){
 		getchar();
 	}while(table[index]==NULL);
 	struct customer *payNow = table[index];
+	// yang diminta bayar, yang pertama terdapat di queue
 	printf("%s\n", payNow->name);
 	int i = 1, total = 0;
 	struct dish* ordered = payNow->bookedHead;
 	while(ordered!=NULL){
 		printf("[%d] %s x %d\n", i, ordered->name, ordered->quantity);
 		total+=ordered->price;
+		// menghitung total harga
 		ordered = ordered->next;
 	}
 	printf("Total = Rp.%d\n", total);
@@ -467,6 +500,7 @@ void Payment(){
 	table[index] = table[index]->next;
 	throws = NULL;
 	free(throws);
+	//technically a push head
 	printf("Press enter to continue..");
 	getchar();
 }
@@ -486,6 +520,9 @@ void ExitPage(){
 		printf("%s\n", screen[i]);
 	}
 }
+
+// MENU UTAMA
+
 int main(){
     char choose;
     do{
